@@ -135,10 +135,11 @@ class FeatureCreator(BaseEstimator, TransformerMixin):
 
 ## Étape 3 : Filtrage des anomalies
 class AnomalyFilter(BaseEstimator, TransformerMixin):
-    def __init__(self, contamination=0.1, target_elimination = False):
+    def __init__(self, contamination=0.1, target_elimination = False, prix_m2 = False):
         self.contamination = contamination
         self.model = IsolationForest(contamination=self.contamination, random_state=42)
         self.target_elimination = target_elimination
+        self.prix_m2 = prix_m2
         if self.target_elimination == False:
             self.anomaly_columns =['surface_reelle_bati', 'nombre_lots', 'surface_terrain', 'nombre_pieces_principales',"total_surface_carrez","densite_weighted"]
         else:
@@ -153,7 +154,10 @@ class AnomalyFilter(BaseEstimator, TransformerMixin):
         pl.Series("anomalie", self.model.predict(X[self.anomaly_columns])).alias("anomalie")
         ])
         X = X.filter(pl.col("anomalie") == 1)
-        return X.drop(["anomalie","prix_m2"])
+        if self.prix_m2:
+            return X.drop(["anomalie","valeur_fonciere"])
+        else:
+            return X.drop(["anomalie","prix_m2"])
 
 # class AnomalyFilter(BaseEstimator, TransformerMixin):
 #     def __init__(self, contamination=0.1, target_elimination=False):
