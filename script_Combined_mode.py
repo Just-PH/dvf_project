@@ -50,32 +50,37 @@ if __name__ == "__main__":
         # Load the grid data for POI weighting
         df_grid = pl.read_csv('data_pop_density/dataframe_densite&amenities_radius=500.csv')
 
-        # Define the preprocessing pipeline
+        # Définir le pipeline de preprocessing
         pipeline_preprocess = Pipeline(steps=[
             ("cleaner", DataCleaner(nombre_lots_max=5, cutoff_valeur_fonciere_min=0.75e5, min_surface=15)),
-            ("feature_creator", FeatureCreator(cutoff_prix_m2_min=3e3, cutoff_prix_m2_max=18e3)),
-            ("weighted_poi", WeightedPOICountsTransformer(n_neighbors=4)),
-            ("anomaly_filter", AnomalyFilter(contamination=0.1, target_elimination=True)),
+            ("feature_creator", FeatureCreator(cutoff_prix_m2_min=3e3,cutoff_prix_m2_max=18e3)),
+            ('weighted_poi', WeightedPOICountsTransformer(n_neighbors=4)),
+            ("anomaly_filter", AnomalyFilter(contamination=0.1, target_elimination=True, prix_m2= True)),
+            # ('weighted_poi', WeightedPOICountsTransformer(n_neighbors=4)),
         ])
+
         pipeline_preprocess.set_params(weighted_poi__df_grid=df_grid)
 
-        # Overwrite the preprocessed file if needed
-        if OVERWRITE:
-            with open(PREPROCESSED_FILE, "w") as f:
-                pass  # clear the file
+        with open(PREPROCESSED_FILE, "w") as f:
+            pass
 
-            # Process each year separately and append to CSV
-            for year in YEARS:
-                print(f"Processing year {year}...")
-                df_year = data_loader('data_dvf', annees=[year], departements=dep)
-                print(f"Data loaded for {year}: {df_year.shape[0]} rows")
-                df_processed = pipeline_preprocess.fit_transform(df_year)
-                df_processed = df_processed.drop_nulls()
-                print(f"Data processed for {year}: {df_processed.shape[0]} rows")
-                with open(PREPROCESSED_FILE, mode="a") as f:
-                    df_processed.write_csv(f, include_header=True)
-            print("All years processed and saved!")
+        # === 1. Charger et prétraiter chaque année séparément ===
+        for year in YEARS:
+            print(f"Processing year {year}...")
 
+            # Charger les données de l'année en cours
+            df_year = data_loader('data_dvf', annees=[year],departements=dep)
+            print(f"Data loaded for {year}: {df_year.shape[0]} rows")
+
+            # Appliquer le préprocessing
+            df_processed = pipeline_preprocess.fit_transform(df_year)
+            df_processed.drop_nulls()
+            print(f"Data processed for {year}: {df_processed.shape[0]} rows")
+
+            # Sauvegarder les données prétraitées en ajoutant au CSV
+            with open(PREPROCESSED_FILE, mode="a") as f:
+                df_processed.write_csv(f,include_header=True)
+        print("All years processed and saved!")
         # Load all preprocessed data as a LazyFrame
         df_lazy = pl.scan_csv(
             PREPROCESSED_FILE,
@@ -108,7 +113,8 @@ if __name__ == "__main__":
                 'entertainment_pois_weighted': pl.Float32,
                 'cultural_pois_weighted': pl.Float32
             },
-            ignore_errors = True
+            ignore_errors = True,
+            # truncate_ragged_lines=True  # This will truncate extra fields in each row
         ).drop_nulls()
 
 
@@ -194,9 +200,14 @@ if __name__ == "__main__":
 
         # Initialize and train the combined model
         combined_model = train_combined_model(
-            physical_params= params_physical,
-            contextual_params= params_physical,
-            physical_weight=0.5,
+            df_train_features,
+            df_train_target,
+            physical_pipeline,
+            physical_features,
+            params_physical,
+            contextual_pipeline,
+            contextual_features,
+            params_contextual,
             stacking=True
         )
         print("Model training completed for region:", region)
@@ -206,7 +217,14 @@ if __name__ == "__main__":
 
         # --- Evaluate the model ---
         # Get predictions on the test set
-        y_pred_test = combined_prediction(combined_model, df_test_features)
+        y_pred_test = combined_prediction(
+            combined_model,
+            df_test_features,
+            physical_pipeline,
+            physical_features,
+            contextual_pipeline,
+            contextual_features
+        )
 
         # Plot true vs predicted values (log-scaled axes)
         y_test = df_test_target.collect().to_numpy().ravel()
@@ -228,7 +246,8 @@ if __name__ == "__main__":
         plt.ylim(0.75*min(y_pred_test), 1.25*max(y_pred_test))
 
         # Compute and annotate SHAP impact results
-        impact_dict = compute_shap_impact(combined_model, df_test_features, sample_size=250)
+        impact_dict = compute_shap_impact(combined_model, df_test_features,physical_pipeline, physical_features,
+                        contextual_pipeline, contextual_features, sample_size=250)
         impact_text = (
             f"Physical Model Impact: {impact_dict['physical_model_impact']:.1f}%\n"
             f"Contextual Model Impact: {impact_dict['contextual_model_impact']:.1f}%"
