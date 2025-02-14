@@ -166,6 +166,7 @@ data_dvf
 data_processed
 data_pop_density
 result_xgb_model/*.pkl
+result_combined_model/*.pkl
 *.pbf
 result_xgb_model/xgboost_model.pkl
 data_processed/data_dvf_preprocessed.csv
