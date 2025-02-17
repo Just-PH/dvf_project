@@ -1,4 +1,5 @@
 import os
+from typing import Optional, Union, Tuple, List
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
@@ -29,17 +30,24 @@ class DataCleaner(BaseEstimator, TransformerMixin):
         min_surface (float): Minimum allowed total surface.
         max_surface (float): Maximum allowed total surface.
     """
-    def __init__(self, nombre_lots_max=5, cutoff_valeur_fonciere_min=0, cutoff_valeur_fonciere_max=1e9, min_surface=0, max_surface=1e9):
+    def __init__(
+        self,
+        nombre_lots_max: int = 5,
+        cutoff_valeur_fonciere_min: float = 0,
+        cutoff_valeur_fonciere_max: float = 1e9,
+        min_surface: float = 0,
+        max_surface: float = 1e9
+    ) -> None:
         self.nombre_lots_max = nombre_lots_max
         self.cutoff_valeur_fonciere_min = cutoff_valeur_fonciere_min
         self.cutoff_valeur_fonciere_max = cutoff_valeur_fonciere_max
         self.min_surface = min_surface
         self.max_surface = max_surface
 
-    def fit(self, X, y=None):
+    def fit(self,  X: pl.DataFrame, y: Optional[pl.Series] = None) -> 'DataCleaner':
         return self
 
-    def transform(self, X):
+    def transform(self, X: pl.DataFrame) -> pl.DataFrame:
         # Using Polars to filter the data
         print(f"Shape before filtering: {X.shape}")
         # Calculate total surface from multiple columns, filling nulls with 0
@@ -80,14 +88,14 @@ class FeatureCreator(BaseEstimator, TransformerMixin):
         cutoff_prix_m2_min (float): Minimum allowed price per m².
         cutoff_prix_m2_max (float): Maximum allowed price per m².
     """
-    def __init__(self, cutoff_prix_m2_min=0, cutoff_prix_m2_max=1e6):
+    def __init__(self, cutoff_prix_m2_min: float = 0, cutoff_prix_m2_max: float = 1e6) -> None:
         self.cutoff_prix_m2_min = cutoff_prix_m2_min
         self.cutoff_prix_m2_max = cutoff_prix_m2_max
 
-    def fit(self, X, y=None):
+    def fit(self, X: pl.DataFrame, y: Optional[pl.Series] = None) -> 'FeatureCreator':
         return self
 
-    def transform(self, X):
+    def transform(self, X: pl.DataFrame) -> pl.DataFrame:
         # Add new columns based on the date and fill nulls for surface columns
         X = X.with_columns([
             (pl.col("date_mutation").dt.month() / 12).sin().alias("sin_month"),
@@ -161,7 +169,7 @@ class AnomalyFilter(BaseEstimator, TransformerMixin):
         target_elimination (bool): If True, include 'prix_m2' in the anomaly detection.
         prix_m2 (bool): If True, drop 'valeur_fonciere' after filtering.
     """
-    def __init__(self, contamination=0.1, target_elimination=False, prix_m2=False):
+    def __init__(self, contamination: float = 0.1, target_elimination: bool = False, prix_m2: bool = False) -> None:
         self.contamination = contamination
         self.model = IsolationForest(contamination=self.contamination, random_state=42)
         self.target_elimination = target_elimination
@@ -173,11 +181,11 @@ class AnomalyFilter(BaseEstimator, TransformerMixin):
             self.anomaly_columns = ['surface_reelle_bati', 'nombre_lots', 'surface_terrain',
                                       'nombre_pieces_principales', "total_surface_carrez", "densite_weighted", 'prix_m2']
 
-    def fit(self, X, y=None):
+    def fit(self, X: pl.DataFrame, y: Optional[pl.Series] = None) -> 'AnomalyFilter':
         self.model.fit(X[self.anomaly_columns])
         return self
 
-    def transform(self, X):
+    def transform(self, X: pl.DataFrame) -> pl.DataFrame:
         # Create an "anomaly" column based on predictions from IsolationForest
         X = X.with_columns([
             pl.Series("anomalie", self.model.predict(X[self.anomaly_columns])).alias("anomalie")
@@ -203,7 +211,7 @@ class WeightedPOICountsTransformer(BaseEstimator, TransformerMixin):
         n_neighbors (int): Number of neighbors to use.
         df_grid (polars.DataFrame): DataFrame containing grid data with columns ['lon', 'lat'] and POI values.
     """
-    def __init__(self, n_neighbors=4, df_grid=None):
+    def __init__(self, n_neighbors: int = 4, df_grid: Optional[pl.DataFrame] = None) -> None:
         self.poi_columns = [
             'densite', 'transport_pois', 'education_pois', 'health_pois', 'food_pois',
             'shopping_pois', 'park_pois', 'entertainment_pois', 'cultural_pois'
@@ -211,10 +219,10 @@ class WeightedPOICountsTransformer(BaseEstimator, TransformerMixin):
         self.n_neighbors = n_neighbors
         self.df_grid = df_grid
 
-    def fit(self, X, y=None):
+    def fit(self, X: pl.DataFrame, y: Optional[pl.DataFrame] = None) -> 'WeightedPOICountsTransformer':
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X: pl.DataFrame, y: Optional[pl.DataFrame] = None) -> pl.DataFrame:
         if self.df_grid is None:
             raise ValueError("df_grid must be provided before calling transform.")
         # Build a KD-tree using grid coordinates
@@ -234,7 +242,13 @@ class WeightedPOICountsTransformer(BaseEstimator, TransformerMixin):
 # ----------------------------
 # Data Loader
 # ----------------------------
-def data_loader(path, departements=[], annees=[], fraction=None, chunksize=None):
+def data_loader(
+    path: str,
+    departements: Optional[List[Union[str, int]]] = [],
+    annees: Optional[List[Union[str, int]]] = [],
+    fraction: Optional[float] = None,
+    chunksize: Optional[int] = None
+) -> pl.DataFrame:
     """
     Load data from CSV files located in a directory structure.
 
@@ -302,7 +316,12 @@ def data_loader(path, departements=[], annees=[], fraction=None, chunksize=None)
 # ----------------------------
 # XGBoost Model Builder
 # ----------------------------
-def build_xgboost_model(params, numerical_columns, categorical_columns_onehot, unique_categories):
+def build_xgboost_model(
+    params: dict,
+    numerical_columns: List[str],
+    categorical_columns_onehot: List[str],
+    unique_categories: List[List[str]]
+) -> Tuple[ColumnTransformer, XGBRegressor]:
     """
     Build an XGBoost model along with a preprocessing pipeline for categorical and numerical features.
 
@@ -336,7 +355,14 @@ def build_xgboost_model(params, numerical_columns, categorical_columns_onehot, u
 # ----------------------------
 # Plotting Predictions
 # ----------------------------
-def plot_train_test_predictions(y_train, y_test, X_train, X_test, model, save_path):
+def plot_train_test_predictions(
+    y_train: np.ndarray,
+    y_test: np.ndarray,
+    X_train: np.ndarray,
+    X_test: np.ndarray,
+    model: XGBRegressor,
+    save_path: str
+) -> None:
     """
     Generate a figure with two side-by-side plots showing predictions for the training and test sets.
 
@@ -410,7 +436,7 @@ def plot_train_test_predictions(y_train, y_test, X_train, X_test, model, save_pa
 # ----------------------------
 # Model Saving and Loading
 # ----------------------------
-def save_model(pipeline, filename):
+def save_model(pipeline: Pipeline, filename: str) -> None:
     """
     Save the given model pipeline to a file.
 
@@ -421,7 +447,7 @@ def save_model(pipeline, filename):
     joblib.dump(pipeline, filename)
     print(f"Model saved as {filename}")
 
-def load_model(filename):
+def load_model(filename: str) -> Pipeline:
     """
     Load a model pipeline from a file.
 

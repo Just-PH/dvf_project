@@ -259,7 +259,6 @@ if __name__ == "__main__":
                 bbox=dict(facecolor='white', alpha=0.8, edgecolor='black'))
 
         plt.tight_layout()
-        plt.show()
         plot_path = f'result_combined_model/predictions_{region}.png'
         plt.savefig(plot_path, dpi=300)
         plt.close()
