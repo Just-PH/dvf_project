@@ -170,7 +170,7 @@ result_combined_model/*.pkl
 *.pbf
 result_xgb_model/xgboost_model.pkl
 data_processed/data_dvf_preprocessed.csv
-*.
-catboot_info
+*.ipynb
+catboost_info
 .vscode
 *.csv
