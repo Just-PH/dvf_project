@@ -1,5 +1,0 @@
-{
-  "python.analysis.extraPaths": [
-    "./model_script/script_XGBoost_model_"
-  ]
-}
