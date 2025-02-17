@@ -163,8 +163,10 @@ cython_debug/
 
 # Data
 data_dvf
-data_processed
-data_pop_density
+data_processed/*.csv
+data_pop_density/*.csv
+data_pop_density/*.zip
+data_pop_density/*.osm.*
 result_xgb_model/*.pkl
 result_combined_model/*.pkl
 *.pbf
