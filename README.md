@@ -40,6 +40,20 @@ Le but de ce projet est de construire une chaîne de traitement complète pour :
   - `nombre_pieces_principales`, `surface_terrain`
   - `longitude`, `latitude`, `valeur_fonciere`
 
+  L'architecture est la suivante :
+  data_dvf
+  ├── 2019/
+  ├── 2020/
+  ├── 2021/
+  ├── 2022/
+  ├── 2023/
+  └── 2024/
+      ├── 01.csv.gz
+      ├── 02.csv.gz
+      ├── ...
+      └── 974.csv.gz
+
+
 - **Grille de données pour POI**
   Un fichier CSV (par exemple, `data_pop_density/dataframe_densite&amenities_radius=500.csv`) contenant les coordonnées (`lon`, `lat`) et diverses mesures de densité et de proximité des points d'intérêt (transport, éducation, santé, etc.).
 
