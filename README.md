@@ -26,7 +26,11 @@ Le but de ce projet est de construire une chaîne de traitement complète pour :
 - **Transformer** ces données en créant de nouvelles features (ex. : surfaces totales, transformations temporelles, prix par m²).
 - **Filtrer** les anomalies à l'aide d'un algorithme d'IsolationForest.
 - **Calculer** des indicateurs complémentaires, comme le nombre pondéré de points d’intérêt (POI), grâce à une approche basée sur un KD-tree.
-- **Entraîner** un modèle de régression combiné qui intègre deux sous-modèles : l'un utilisant les caractéristiques physiques et l'autre les caractéristiques contextuelles. Ce modèle peut être configuré pour utiliser des modèles standards (ElasticNet et XGBRegressor) ou des GAMs via un wrapper, et peut également combiner les prédictions par stacking.
+- **Entraîner** des modèles de pricing :
+  - **`script_XGBoost_model.py`** : Entraîne un modèle de pricing classique utilisant **XGBoost** sur l'ensemble des caractéristiques disponibles, sans séparation physique/contextuelle, pour une approche plus directe et rapide.
+  - **`script_Combined_model.py`** : Entraîne un modèle de régression combiné intégrant deux sous-modèles : l'un basé sur les caractéristiques physiques, l'autre sur les caractéristiques contextuelles. Le modèle peut être configuré pour utiliser des algorithmes standards (ElasticNet et XGBRegressor) ou des GAMs via un wrapper, avec une combinaison des prédictions par stacking.
+
+
 - **Évaluer** les performances du modèle et analyser l’impact relatif des sous-modèles avec SHAP.
 
 ## Entrées et Sorties
