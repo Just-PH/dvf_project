@@ -53,10 +53,11 @@ Le but de ce projet est de construire une chaîne de traitement complète pour :
       ├── ...
       └── 974.csv.gz
 
-Les données ont été téléchargés sur le website des [données de valeurs foncières](https://files.data.gouv.fr/geo-dvf/latest/csv/)
+Les données ont été téléchargés sur le website des [données de valeurs foncières](https://files.data.gouv.fr/geo-dvf/latest/csv/), avec `script_scrapping_dv.py`
 
 - **Grille de données pour POI**
   Le fichier CSV (par exemple, `data_pop_density/dataframe_densite&amenities_radius=500.csv`) contenant les coordonnées (`lon`, `lat`) et diverses mesures de densité et de proximité des points d'intérêt (transport, éducation, santé, etc.).
+  Il a été obtenu via  `data_po_density/script_amenities_postgre_gist.py` qui se sert d'une BDD PostgreSQL montée à partir du fichier PBF concernant les données géographiques françaises d'[Open Street Map](https://www.data.gouv.fr/fr/datasets/r/01fdab09-ed86-4259-b863-69913a3e04d1)
 
 - **Paramètres de configuration**
   Divers paramètres définis dans le script principal, tels que :
