@@ -52,7 +52,8 @@ Le but de ce projet est de construire une chaîne de traitement complète pour :
       ├── 02.csv.gz
       ├── ...
       └── 974.csv.gz
-```
+
+Les données ont été téléchargés sur le website des [Données de valeurs foncières]:(https://files.data.gouv.fr/geo-dvf/latest/csv/)
 
 - **Grille de données pour POI**
   Un fichier CSV (par exemple, `data_pop_density/dataframe_densite&amenities_radius=500.csv`) contenant les coordonnées (`lon`, `lat`) et diverses mesures de densité et de proximité des points d'intérêt (transport, éducation, santé, etc.).
