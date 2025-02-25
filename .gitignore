@@ -165,6 +165,7 @@ cython_debug/
 data_dvf
 data_processed/*.csv
 data_pop_density/*.csv
+!data_pop_density/dataframe_densite&amenities_radius=500.csv
 data_pop_density/*.zip
 data_pop_density/*.osm.*
 result_xgb_model/*.pkl
