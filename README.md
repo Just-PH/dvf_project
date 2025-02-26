@@ -44,7 +44,8 @@ The goal of this project is to build a complete data processing chain to:
   - `longitude`, `latitude`, `valeur_fonciere`
 
   The directory structure looks like this:
-  ```data_dvf
+```
+  data_dvf
   ├── 2019/
   ├── 2020/
   ├── 2021/
@@ -55,7 +56,7 @@ The goal of this project is to build a complete data processing chain to:
       ├── 02.csv.gz
       ├── ...
       └── 974.csv.gz
-
+```
 
   The data was downloaded from the [DVF data website](https://files.data.gouv.fr/geo-dvf/latest/csv/) using `script_scrapping_dv.py`.
 
